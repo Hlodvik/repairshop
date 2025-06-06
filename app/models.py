@@ -1,32 +1,66 @@
-from . import db
+from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.ext.declarative import declarative_base
 
  
-ticket_mechanic = db.Table('ticket_mechanic',
-    db.Column('ticket_id', db.Integer, db.ForeignKey('tickets.id'), primary_key=True),
-    db.Column('mechanic_id', db.Integer, db.ForeignKey('mechanics.id'), primary_key=True)
+class Base(DeclarativeBase):
+    pass
+ 
+ticket_mechanic = Table(
+    "ticket_mechanic",
+    Base.metadata,
+    Column("ticket_id", Integer, ForeignKey("tickets.id"), primary_key=True),
+    Column("mechanic_id", Integer, ForeignKey("mechanics.id"), primary_key=True)
 )
+ticket_inventory = Table(
+    "ticket_inventory",
+    Base.metadata,
+    Column("ticket_id", ForeignKey("tickets.id"), primary_key=True),
+    Column("inventory_id", ForeignKey("inventory.id"), primary_key=True)
+)
+class Customer(Base):
+    __tablename__ = "customers"
 
-class Customer(db.Model):
-    __tablename__ = 'customers'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(String(360), nullable=False, unique=True)
+    address: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    email = db.Column(db.String(360), nullable=False, unique=True)
-    DOB = db.Column(db.Date, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+class Mechanic(Base):
+    __tablename__ = "mechanics"
 
-class Mechanic(db.Model):
-    __tablename__ = 'mechanics'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    tickets: Mapped[list["Ticket"]] = relationship(
+        secondary=ticket_mechanic, back_populates="mechanics"
+    )
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
+class Ticket(Base):
+    __tablename__ = "tickets"
 
-class Ticket(db.Model):
-    __tablename__ = 'tickets'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), nullable=False)
 
-    id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
-    description = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(50), nullable=False)
+    mechanics: Mapped[list["Mechanic"]] = relationship(
+        secondary=ticket_mechanic, back_populates="tickets"
+    )
+    parts: Mapped[list["Inventory"]] = relationship(
+        secondary=ticket_inventory,
+        back_populates="tickets"
+    )
 
-    mechanics = db.relationship('Mechanic', secondary=ticket_mechanic, backref='tickets')
+
+
+class Inventory(Base):
+    __tablename__ = "inventory"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    price: Mapped[float] = mapped_column(nullable=False)
+
+    tickets: Mapped[list["Ticket"]] = relationship(
+        secondary=ticket_inventory,
+        back_populates="parts"
+    )
