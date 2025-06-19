@@ -1,7 +1,7 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from app.extensions import ma
 from ..models import Inventory
 
-class InventorySchema(SQLAlchemyAutoSchema):
+class InventorySchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Inventory
         load_instance = True

@@ -4,11 +4,13 @@ from app.db import SessionLocal
 from app.models import Inventory
 from . import inventory_bp
 from .schemas import InventorySchema
+from app.extensions import limiter, cache  
 
 inventory_schema = InventorySchema()
 inventory_list_schema = InventorySchema(many=True)
 
-@inventory_bp.route('/', methods=['POST'])
+#  limit inventory creation to prevent spam or abuse
+@inventory_bp.route('/', methods=['POST']) 
 def create_inventory():
     data = request.get_json()
     with SessionLocal() as session:
@@ -17,7 +19,9 @@ def create_inventory():
         session.commit()
         return jsonify(inventory_schema.dump(item)), 201
 
+#  cache inventory 
 @inventory_bp.route('/', methods=['GET'])
+@cache.cached(timeout=60)
 def get_inventory():
     with SessionLocal() as session:
         items = session.execute(select(Inventory)).scalars().all()
@@ -30,8 +34,8 @@ def get_inventory_item(id):
         if not item:
             return jsonify({"error": "Part not found"}), 404
         return jsonify(inventory_schema.dump(item)), 200
-
-@inventory_bp.route('/<int:id>', methods=['PUT'])
+ 
+@inventory_bp.route('/<int:id>', methods=['PUT']) 
 def update_inventory_item(id):
     data = request.get_json()
     with SessionLocal() as session:
@@ -44,8 +48,8 @@ def update_inventory_item(id):
                 setattr(item, field, data[field])
         session.commit()
         return jsonify(inventory_schema.dump(item)), 200
-
-@inventory_bp.route('/<int:id>', methods=['DELETE'])
+ 
+@inventory_bp.route('/<int:id>', methods=['DELETE']) 
 def delete_inventory_item(id):
     with SessionLocal() as session:
         item = session.get(Inventory, id)

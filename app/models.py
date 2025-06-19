@@ -1,6 +1,6 @@
 from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.ext.declarative import declarative_base
+
 
  
 class Base(DeclarativeBase):
@@ -50,8 +50,6 @@ class Ticket(Base):
         secondary=ticket_inventory,
         back_populates="tickets"
     )
-
-
 
 class Inventory(Base):
     __tablename__ = "inventory"

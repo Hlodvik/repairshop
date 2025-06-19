@@ -1,8 +1,8 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from app.extensions import ma
 from marshmallow import fields
 from app.models import Ticket
 
-class TicketSchema(SQLAlchemyAutoSchema):
+class TicketSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Ticket
         load_instance = True
